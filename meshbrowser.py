@@ -345,7 +345,8 @@ RNS.log("Source announced")
 
 print("Recipient: ", end=" ")
 #recipient_hexhash = input()
-recipient_hexhash = "19cf8498214048ea2d05d9e83de9773a"
+#recipient_hexhash = "19cf8498214048ea2d05d9e83de9773a"
+recipient_hexhash = "35977beaaea613ac95754e34624955a1"
 recipient_hash = bytes.fromhex(recipient_hexhash)
 
 if not RNS.Transport.has_path(recipient_hash):
@@ -356,6 +357,7 @@ if not RNS.Transport.has_path(recipient_hash):
 
 # Recall the server identity
 recipient_identity = RNS.Identity.recall(recipient_hash)
+router.announce(source.hash)
 
 dest = RNS.Destination(recipient_identity, RNS.Destination.OUT, RNS.Destination.SINGLE, "lxmf", "delivery")
 
