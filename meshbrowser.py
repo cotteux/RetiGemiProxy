@@ -18,12 +18,13 @@ import time
 import json
 import LXMF
 import RNS
+from pathlib import Path
 required_stamp_cost = 8
 enforce_stamps = False
 
 
 
-os.system('cls||clear')
+# os.system('cls||clear')
 #parser = argparse.ArgumentParser(description="Gateway to Gemini Network")
 #parser.add_argument("--port", type=str, help="Specify the serial port")
 
@@ -105,7 +106,7 @@ class AgenaHandler(socketserver.BaseRequestHandler):
         
         if status == 21 :
             self.request.send("{} {}\r\n".format(20, meta).encode("UTF-8"))
-            time.sleep(3)
+            time.sleep(1)
             self.request.send("The Page is loading, Be patient !!!\r\n=> gemini://{} At BEEP Click here\r\n".format(url).encode("UTF-8"))
             #self.request.send("Page size {} lines \r\n".format(lines).encode("UTF-8"))
             #self.request.send("at speed of 15 to 40 bytes/sec on Longfast Channel\r\n".format(url).encode("UTF-8"))
@@ -114,15 +115,15 @@ class AgenaHandler(socketserver.BaseRequestHandler):
             self.request.send("The Page is Too Big, more than 100 lines\r\n".format(url).encode("UTF-8"))
         elif status == 23 :
             self.request.send("{} {}\r\n".format(20, meta).encode("UTF-8"))
-            time.sleep(3)
-            self.request.send("The Page is loading, Be patient !!!\r\n=> gemini://{} At BEEP Click here\r\n".format(url).encode("UTF-8"))
+            time.sleep(1)
+            #self.request.send("The Page is loading, Be patient !!!\r\n=> gemini://{} At BEEP Click here\r\n".format(url).encode("UTF-8"))
             #self.request.send("Page size {} lines \r\n".format(lines).encode("UTF-8"))
             #self.request.send("at speed of 15 to 40 bytes/sec on Longfast Channel++\r\n".format(url).encode("UTF-8"))    
         else : 
             self.request.send("{} {}\r\n".format(status, meta).encode("UTF-8"))    
             
-        if status / 10 != 2:
-            self.request.close()
+        #if status / 10 != 2:
+        #    self.request.close()
         
     def parse_request(self):
         """
@@ -161,7 +162,7 @@ class AgenaHandler(socketserver.BaseRequestHandler):
     
 
     def _serve_file(self, mime, filename):
-        global url,murl,retour,resend
+        global url,murl,retour,resend,t0,t1
         load = 0
         
         """
@@ -191,71 +192,95 @@ class AgenaHandler(socketserver.BaseRequestHandler):
                
                     text = url
                     print ("-- "+text)
-                    send_message(text)
+                    self.send_message(text)
                     reload = ""
                     self.send_gemini_header(23,"text/gemini")
                 else:
                     murl = url
-                    send_message(url)
+                    self.send_message(url)
                     
                     
-                        
+                     
                     
                     self.send_gemini_header(23,"text/gemini")
+                    t0 = time.time()
+                    my_file = Path(filename)
+                    x=0
+                    print (" LOADING...")
+                    while not(my_file.is_file()):
+                       time.sleep(0.3)
+                       
+                       if x == 1 : 
+                          print("--")   
+                          x=0
+                       else : 
+                          print("|")   
+                          x=1
+                    else:
+                        fp = open(filename,"rb")
+                        
+                        self.request.send(fp.read())
+                        fp.close()
                         
                     retour = ""
-        
+                    #t1 = time.time()
             
   
-def onCheck(packet):
-            
-            global retour,url
-            retour = ""
-            try:
-                #print ("je check")
+    def onCheck(self,packet):
                 
-                if packet != "":
-                        
+                global retour,url
+                retour = ""
+                try:
+                    #print ("je check")
+                    
+                    if packet != "":
+                            
 
-                    message_string = packet
-                    #print ("--"+message_string)
-                    #print ("--"+message_string[1:34]+"-")
-                    if message_string[:8] =="10 input"   :
-                        #self.send_gemini_header(10, "Entré necessaire")
-                        print ("input required whouwhou")
-                        retour = "10 "+message_string[9:]
-                       
-                    elif message_string[:12] =="redirect to:"   :
-                        url = message_string[13:]
-                        #self.send_gemini_header(20, url)
-                        print ("redirect-------- "+url)
-                      
-                        retour = "30 "+url
-                    elif message_string[:28] =="Client certificate required."   :
-                        url = message_string[13:]
-                        #self.send_gemini_header(20, url)
-                        print ("certificate needed")
-                      
-                        retour = "60 "+"cert"
-                    elif message_string[:9] =="Not Found" or message_string[:12] =="Unknown host" or message_string[:18] =="Connection refused" or message_string[:14] =="Socket timeout" or message_string[:17] =="Error from server":
-                        url = message_string[13:]
-                        #self.send_gemini_header(20, url)
-                        print ("server not found")
-                        retour = "50 "+"NO SERVER"
-                    elif message_string[:8] =="C99lines"  :
-                        url = message_string[9:]
-                        #self.send_gemini_header(20, url)
-                        print ("server not found-------- "+url)
-                      
-                        retour = "22 text/gemini"
-                    elif message_string[:4]=="-\/-" :
-                                
-                        retour = "21 text/gemini"
-                    else :
-                        retour = ""
+                        message_string = packet
+                        #print ("--"+message_string)
+                        #print ("--"+message_string[1:34]+"-")
+                        if message_string[:8] =="10 input"   :
+                            self.send_gemini_header(10, "Entré necessaire")
+                            print ("input required whouwhou")
+                            retour = "10 "+message_string[9:]
+                           
+                        elif message_string[:12] =="redirect to:"   :
+                            url = message_string[13:]
+                            self.send_gemini_header(20, url)
+                            print ("redirect-------- "+url)
+                          
+                            retour = "30 "+url
+                        elif message_string[:28] =="Client certificate required."   :
+                            url = message_string[13:]
+                            self.send_gemini_header(20, url)
+                            print ("certificate needed")
+                          
+                            retour = "60 "+"cert"
+                        elif message_string[:9] =="Not Found" or message_string[:12] =="Unknown host" or message_string[:18] =="Connection refused" or message_string[:14] =="Socket timeout" or message_string[:17] =="Error from server":
+                            url = message_string[13:]
+                            self.send_gemini_header(20, url)
+                            print ("server not found")
+                            retour = "50 "+"NO SERVER"
+                        elif message_string[:8] =="C99lines"  :
+                            url = message_string[9:]
+                            self.send_gemini_header(20, url)
+                            print ("server not found-------- "+url)
+                          
+                            retour = "22 text/gemini"
+                                             
                
-            except KeyError as e:
-                print(f"Error processing packet: {e}")
+                        else :
+                            retour = ""
+                   
+                except KeyError as e:
+                    print(f"Error processing packet: {e}")
+
+
+
+    def send_message(self,text) :
+        lxm = LXMF.LXMessage(dest, source, text,desired_method=LXMF.LXMessage.DIRECT, include_ticket=True)
+
+        router.handle_outbound(lxm)
 
 def delivery_callback(message):
     global my_lxmf_destination, router
@@ -315,9 +340,11 @@ def delivery_callback(message):
     f.close()  
     t1 = time.time()
     t0t1 = t1-t0
-    size = size + len(jumpline)
+    size = size + len(message_string)
     print('\a')
     print('\007')
+    print ("t0   %f secondes"% t0)
+    print ("t1   %f secondes"% t1)
     print (" "+str(len(page))+" lignes en %f secondes"% t0t1)
     print ("  Send "+str(size)+" bytes at "+str(size//t0t1)+" bytes/second")
     
@@ -329,17 +356,11 @@ def delivery_callback(message):
     resend = 0
     
 
-def send_message(text) :
-    lxm = LXMF.LXMessage(dest, source, text,desired_method=LXMF.LXMessage.DIRECT, include_ticket=True)
-
-    router.handle_outbound(lxm)
-
-
 r = RNS.Reticulum()
 router = LXMF.LXMRouter(storagepath="./tmp2")
 router.register_delivery_callback(delivery_callback)
 ident = RNS.Identity()
-source = router.register_delivery_identity(ident, display_name="GEMINIPROXY", stamp_cost=8)
+source = router.register_delivery_identity(ident, display_name="GEMINI-PROXY", stamp_cost=8)
 router.announce(source.hash)
 RNS.log("Source announced")
 
@@ -352,9 +373,15 @@ recipient_hash = bytes.fromhex(recipient_hexhash)
 if not RNS.Transport.has_path(recipient_hash):
     RNS.log("Destination is not yet known. Requesting path and waiting for announce to arrive...")
     RNS.Transport.request_path(recipient_hash)
+    i=0
     while not RNS.Transport.has_path(recipient_hash):
-      time.sleep(0.1)
-
+      time.sleep(0.5)
+      print("wait..")
+      i = i+1
+      if i == 15 or i == 30 :
+          print (" send request")
+          router.announce(source.hash)
+print ("connected")
 # Recall the server identity
 recipient_identity = RNS.Identity.recall(recipient_hash)
 router.announce(source.hash)
