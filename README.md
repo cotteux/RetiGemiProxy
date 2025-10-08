@@ -8,8 +8,10 @@ Why I did this. Want to work with Lora communication easilly using rnode to Navi
 Proxy Server Private mode (Limited)
    Add only one Certificate to Authenticated on many Gemini capsule. 
    uncomment these 2 liines in Proxyserver
+   
      #certset = ('cert1.pem','key1.pem')  # filename and folder of the certificated to your Gemini authentification 
      #response = ignition.request("gemini://"+str(data),ca_cert=certset) # private server with cert   
+   
    and comment this line
      response = ignition.request("gemini://"+str(data)) # for Public server
 
