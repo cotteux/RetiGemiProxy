@@ -20,7 +20,7 @@ the cert and key, come with are for the Client.py to connect Lagrange.
 
 for Proxyserver create one certificate for the tls gemini connection and Another (only for Private server)
 
-You can use Client.py with key.pem and cert.pem to connect direct to the public server without config.
+You can use Client.py with key.pem and cert.pem to connect direct to the TEST public server  without config but not for day to day use.
 
 Need to install RNS with pip install rns
 and chardet with pip install chardet
