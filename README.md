@@ -2,7 +2,7 @@
 Gemini proxy for using Lagrange with Lora network on Reticulum Network
 PROTOTYPE WIP
 
-This program connect your Lagrange browser (or any Gemini Browser with a proxy option) through Reticulum Network to connect at Gemini Server.
+This program connect your Lagrange browser (or any Gemini Browser with a proxy option) through Reticulum Network to connect at Gemini Network.
 Why I did this. Want to work with Lora communication easilly using rnode to Navigate throught Gemini with all options.
 
 Proxy Server Private mode (Limited)
