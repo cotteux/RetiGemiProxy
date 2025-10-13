@@ -5,7 +5,7 @@ PROTOTYPE WIP
 This program connect your Lagrange browser (or any Gemini Browser with a proxy option) through Reticulum Network to connect at Gemini Network.
 Why I did this. Want to work with Lora communication easilly using rnode to Navigate throught Gemini with all options.
 
-Proxy Server Private mode (Limited)
+## Proxy Server Private mode (Limited)
    Add only one Certificate to Authenticated on many Gemini capsule. 
    uncomment these 2 liines in Proxyserver
    
@@ -15,8 +15,8 @@ Proxy Server Private mode (Limited)
    and comment this line
      response = ignition.request("gemini://"+str(data)) # for Public server
 
-Proxy Server Public
-  Just don't add certificate.
+## Proxy Server Public
+   Just don't add certificate.
 
 the cert and key, come with are for the Client.py to connect Lagrange.
 
@@ -24,5 +24,5 @@ for Proxyserver create one certificate for the tls gemini connection and Another
 
 You can use Client.py with key.pem and cert.pem to connect direct to the TEST public server  without config but not for day to day use.
 
-Need to install RNS with pip install rns
-and chardet with pip install chardet
+Need to install RNS with : **pip install rns**
+and chardet with **pip install chardet**
