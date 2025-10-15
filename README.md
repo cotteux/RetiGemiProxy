@@ -26,3 +26,9 @@ You can use Client.py with key.pem and cert.pem to connect direct to the TEST pu
 
 Need to install RNS with : **pip install rns**
 and chardet with **pip install chardet**
+
+##TODO
+* Redirect done by the server instead of the client
+* Make a clearer code (a total mess)
+* multi connections, can only manage one connection of the time
+* fine tuning the speed of transmission in reticulum
