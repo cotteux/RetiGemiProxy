@@ -15,26 +15,16 @@ from RNS.vendor import umsgpack
 import ignition
 APP_NAME = "Gemini_Proxy"
 
-
 ##########################################################
 #### Server Part #########################################
 ##########################################################
 
-# A reference to the latest client link that connected
-latest_client_link = None
-
-# A reference to the latest buffer object
-latest_buffer = None
 #self.identity_file = identity_file
 # This initialisation is executed when the users chooses
 # to run as a server
 def server(configpath):
-
-    # Let's define an app name. We'll use this for all
-    # destinations we create. Since this echo example
-    # is part of a range of example utilities, we'll put
-    # them all within the app namespace "example_utilities"
- 
+    
+    # Randomly create a new identity for our link example
     identity_file = "proxy_server_identity"
 
     # We must first initialise Reticulum
@@ -48,7 +38,7 @@ def server(configpath):
         server_identity.to_file(identity_file)
         print(f"Created new identity and saved to {identity_file}")
 
-    
+
     # We create a destination that clients can connect to. We
     # want clients to create links to this destination, so we
     # need to create a "single" destination type.
@@ -56,23 +46,23 @@ def server(configpath):
         server_identity,
         RNS.Destination.IN,
         RNS.Destination.SINGLE,
-        APP_NAME
-        )
+        APP_NAME,
+        "resourceproxy"
+    )
 
     # We configure a function that will get called every time
     # a new client creates a link to this destination.
     server_destination.set_link_established_callback(client_connected)
 
     # Everything's ready!
-    # Let's Wait for client requests or user input
+    # Let's Wait for client resources or user input
     server_loop(server_destination)
 
+
 def server_loop(destination):
-    global latest_buffer
-    buffer = latest_buffer
     # Let the user know that everything is ready
     RNS.log(
-        "Link buffer example "+
+        "Resource example "+
         RNS.prettyhexrep(destination.hash)+
         " running, waiting for a connection."
     )
@@ -87,97 +77,90 @@ def server_loop(destination):
         entered = input()
         destination.announce()
         RNS.log("Sent announce from "+RNS.prettyhexrep(destination.hash))
-        
+
 # When a client establishes a link to our server
 # destination, this function will be called with
 # a reference to the link.
+
 def client_connected(link):
-    global latest_client_link, latest_buffer
-    latest_client_link = link
 
     RNS.log("Client connected")
+
+    # We configure the link to accept all resources
+    # and set a callback for completed resources
+    link.set_resource_strategy(RNS.Link.ACCEPT_ALL)
+    link.set_resource_concluded_callback(resource_concluded)
+
     link.set_link_closed_callback(client_disconnected)
 
-    # If a new connection is received, the old reader
-    # needs to be disconnected.
-    if latest_buffer:
-        latest_buffer.close()
+def resource_concluded_sending(resource):
+    if resource.status == RNS.Resource.COMPLETE: 
+        RNS.log(f"The resource {resource} was sent successfully")
 
-
-    # Create buffer objects.
-    #   The stream_id parameter to these functions is
-    #   a bit like a file descriptor, except that it
-    #   is unique to the *receiver*.
-    #
-    #   In this example, both the reader and the writer
-    #   use stream_id = 0, but there are actually two
-    #   separate unidirectional streams flowing in
-    #   opposite directions.
-    #
-    channel = link.get_channel()
-    latest_buffer = RNS.Buffer.create_bidirectional_buffer(0, 0, channel, server_buffer_ready)
+    else: 
+        RNS.log(f"Sending the resource {resource} failed")
 
 def client_disconnected(link):
     RNS.log("Client disconnected")
 
-def server_buffer_ready(ready_bytes: int):
-    """
-    Callback from buffer when buffer has data available
+def resource_concluded(resource):
 
-    :param ready_bytes: The number of bytes ready to read
-    """
-    global latest_buffer
-
-    data = latest_buffer.read(ready_bytes)
-    data = data.decode("utf-8")
-    print ("--+> "+data)
-    #certset = ('cert1.pem','key1.pem')  # filename and folder of the certificated to your Gemini authentification 
-    #response = ignition.request("gemini://"+str(data),ca_cert=certset) # private server with cert
-    response = ignition.request("gemini://"+str(data)) # for Public server
-    if response.is_a(ignition.SuccessResponse):
-        print (response.meta[:11])
-        msg_final = response.data()
-        
-        RNS.log("Received data over the buffer: " + data)
-
-        reply_message = msg_final
-        if response.meta[:5] == 'text/' :
-            reply_message = zlib.compress(reply_message.encode("utf-8"),9)nomadnet
-        
-        latest_buffer.write(reply_message)
-        #latest_buffer.write("<<EOF>>".encode("utf-8"))
-        
-    elif response.is_a(ignition.InputResponse):
-        reply_message = '10 input %s \r\n' % (response.data())
-        latest_buffer.write(reply_message.encode("utf-8"))
+    print (resource.link)
+    if resource.status == RNS.Resource.COMPLETE:
+        RNS.log(f"Metadata: {resource.metadata}")
+        RNS.log(f"Data length: {os.stat(resource.data.name).st_size}")
+        udata = resource.data.read()
+        RNS.log(f"First 32 bytes of data: {udata}")
+        data = udata.decode('utf-8')
+        response = ignition.request("gemini://"+data) 
+        if response.is_a(ignition.SuccessResponse):
             
-        print(f"Needs additional input: {response.data()}")
+            msg_final = response.data()
+            metadata = response.meta
+            print (metadata)
+            RNS.log("Received data from " + data)
 
-    elif response.is_a(ignition.RedirectResponse):
-        reply_message ='30 %s' % (response.data())
+            reply_message = msg_final
+            
+             
+        elif response.is_a(ignition.InputResponse):
+            reply_message = '10 input %s \r\n' % (response.data())
+            
+                
+            print(f"Needs additional input: {response.data()}")
 
-        print(f"Received response, redirect to: {response.data()}")
-        latest_buffer.write(reply_message.encode("utf-8"))
-    elif response.is_a(ignition.TempFailureResponse):
-        reply_message ='Error from server: %s' % (response.data())
+        elif response.is_a(ignition.RedirectResponse):
+            reply_message ='30 %s' % (response.data())
 
-        print(f"Error from server: {response.data()}")
-        latest_buffer.write(reply_message.encode("utf-8"))
-    elif response.is_a(ignition.PermFailureResponse):
-        reply_message ='Error from server: %s' % (response.data())
+            print(f"Received response, redirect to: {response.data()}")
+            
+        elif response.is_a(ignition.TempFailureResponse):
+            reply_message ='Error from server: %s' % (response.data())
 
-        print(f"Error from server: {response.data()}")
-        latest_buffer.write(reply_message.encode("utf-8"))
-    elif response.is_a(ignition.ClientCertRequiredResponse):
-        reply_message ='60 %s' % (response.data()) 
-        print(f"Client certificate required. {response.data()}")
-        latest_buffer.write(reply_message.encode("utf-8"))
-    elif response.is_a(ignition.ErrorResponse):
-        reply_message ='%s' % (response.data().encode("utf-8"))
-        print(f"There was an error on the request: {response.data()}")
-        latest_buffer.write(reply_message.encode("utf-8"))
-    latest_buffer.write("<<EOF>>".encode("utf-8"))
-    latest_buffer.flush()
+            print(f"Error from server: {response.data()}")
+            
+        elif response.is_a(ignition.PermFailureResponse):
+            reply_message ='Error from server: %s' % (response.data())
+
+            print(f"Error from server: {response.data()}")
+            
+        elif response.is_a(ignition.ClientCertRequiredResponse):
+            reply_message ='60 %s' % (response.data()) 
+            print(f"Client certificate required. {response.data()}")
+            
+        elif response.is_a(ignition.ErrorResponse):
+            reply_message ='%s' % (response.data().encode("utf-8"))
+            print(f"There was an error on the request: {response.data()}")
+            
+        else:
+            RNS.log(f"Receiving resource {resource} failed")
+
+        metadata = response.meta
+        if type(reply_message) == str : 
+            reply_message = reply_message.encode('utf-8')
+        # Send the resource
+        resource = RNS.Resource(reply_message, resource.link, metadata=metadata, callback=resource_concluded_sending, auto_compress=True,timeout=360)
+
 ##########################################################
 #### Program Startup #####################################
 ##########################################################
@@ -204,18 +187,14 @@ if __name__ == "__main__":
             type=str
         )
 
-        
-
         args = parser.parse_args()
-
         if args.config:
             configarg = args.config
         else:
             configarg = None
 
         server(configarg)
-        
-            
+
     except KeyboardInterrupt:
         print("")
         sys.exit(0)
