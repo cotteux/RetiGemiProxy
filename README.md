@@ -37,6 +37,7 @@ recipient_hexhash ="776002c84b3c1177f30c80bd74497d6e"  # public server without G
 Need to install RNS with : 
 
     pip install rns
+Don't forget to configure your browser with the proxy localhost:1965
 
 ##TODO
 * Redirect done by the server instead of the client
