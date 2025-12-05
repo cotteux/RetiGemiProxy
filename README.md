@@ -21,7 +21,12 @@ Why I did this. Want to work with Lora communication easilly using rnode to Navi
      #response = ignition.request("gemini://"+str(data)) # for Public server
 ## Proxy Server Public
    Just don't change anything.
+   Need to install RNS with : 
 
+     pip install rns
+   Need to install Ignition with :
+   
+     pip install ignition-gemini
 ## Client
 You can use Client.py without modification to connect direct to the TEST public server without config but not for day to day use.
 The cert and key, come with are for the Client.py to connect with the browser like Lagrange.
@@ -29,7 +34,9 @@ For the Client.py you need to change recipient_hexhash for you server link.
 
 recipient_hexhash ="776002c84b3c1177f30c80bd74497d6e"  # public server without Gemini authentification certificated
 
-Need to install RNS with : **pip install rns**
+Need to install RNS with : 
+
+    pip install rns
 
 ##TODO
 * Redirect done by the server instead of the client
