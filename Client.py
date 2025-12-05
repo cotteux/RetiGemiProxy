@@ -320,10 +320,9 @@ def resource_concluded(resource):
         
         data = resource.data.read()
         
-        print(resource.get_transfer_size())
-        print(resource.get_data_size())
-        print(resource.is_compressed())
-        print(resource.get_parts())
+        print(str(resource.get_transfer_size())+' bytes Transfert')
+        print(str(resource.get_data_size())+' bytes uncompressed')
+        print("send in "+str(resource.get_parts())+" parts")
         total = time.time() - t0
         
         print (str(round(total,2))+" sec with a speed of "+str(round(resource.get_transfer_size()/total*8,0))+" bauds")
