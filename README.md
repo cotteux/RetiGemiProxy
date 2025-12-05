@@ -6,10 +6,10 @@ This program connect your Lagrange browser (or any Gemini Browser with a proxy o
 Why I did this. Want to work with Lora communication easilly using rnode to Navigate throught Gemini with all options.
 
 ## Proxy Server Private mode (Limited)
-   Add only one Certificate to Authenticated on many Gemini capsule. 
+   Add only one Certificate to Authenticated on many Gemini capsule for only one user. 
    uncomment these 2 liines in Proxyserver
    
-     #certset = ('cert1.pem','key1.pem')  # filename and folder of the certificated to your Gemini authentification 
+     #certset = ('cert1.pem','key1.pem')  # filename and folder of the certificated to your Gemini authentification (not the one coming with the github, this is for agena localhost proxy)
      #response = ignition.request("gemini://"+str(data),ca_cert=certset) # private server with cert   
    
    and comment this line
@@ -25,10 +25,8 @@ for Proxyserver create one certificate for the tls gemini connection and Another
 You can use Client.py with key.pem and cert.pem to connect direct to the TEST public server  without config but not for day to day use.
 
 Need to install RNS with : **pip install rns**
-and chardet with **pip install chardet**
 
 ##TODO
 * Redirect done by the server instead of the client
-* Make a clearer code (a total mess)
-* multi connections, can only manage one connection of the time
-* fine tuning the speed of transmission in reticulum
+* multi connections, can only manage one connection at the time
+
