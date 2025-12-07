@@ -41,5 +41,7 @@ Need to install RNS with :
     pip install rns
 Don't forget to configure your browser with the proxy localhost:1965
 
-
+## Video with Lagrange browser
+      https://youtu.be/g3Q5FBgYjMc
+      
 
