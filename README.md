@@ -41,7 +41,5 @@ Need to install RNS with :
     pip install rns
 Don't forget to configure your browser with the proxy localhost:1965
 
-##TODO
-* Redirect done by the server instead of the client
 
 
