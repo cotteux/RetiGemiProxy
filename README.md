@@ -19,7 +19,9 @@ Why I did this. Want to work with Lora communication easilly using rnode to Navi
    and comment this line
    
      #response = ignition.request("gemini://"+str(data)) # for Public server
-## Proxy Server Public
+     
+## Proxy Server Public (do this for Private server)
+ --Now mutiples clients can connect to the server
    Just don't change anything.
    Need to install RNS with : 
 
@@ -41,5 +43,5 @@ Don't forget to configure your browser with the proxy localhost:1965
 
 ##TODO
 * Redirect done by the server instead of the client
-* multi connections, can only manage one connection at the time
+
 
