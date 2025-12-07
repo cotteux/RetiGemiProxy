@@ -9,7 +9,7 @@ Why I did this. Want to work with Lora communication easilly using rnode to Navi
    Add only one Certificate to Authenticated on many Gemini capsule for only one user. 
    Private server need a certificate for the tls gemini connection , you need to create it with openssl like this
    
-      openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes -subj
+      openssl req -x509 -newkey rsa:4096 -keyout key1.pem -out cert1.pem -days 365 -nodes -subj
    
    uncomment these 2 lines in proxyserver.py
    
