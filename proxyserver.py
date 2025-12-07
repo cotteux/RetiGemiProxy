@@ -9,10 +9,10 @@ import sys
 import time
 import argparse
 from datetime import datetime
-import zlib
 import RNS
 from RNS.vendor import umsgpack
 import ignition
+import urllib.parse
 APP_NAME = "Gemini_Proxy"
 
 ##########################################################
@@ -96,7 +96,7 @@ def client_connected(link):
 def resource_concluded_sending(resource):
     if resource.status == RNS.Resource.COMPLETE: 
         RNS.log(f"The resource {resource} was sent successfully")
-
+        
     else: 
         RNS.log(f"Sending the resource {resource} failed")
 
@@ -112,7 +112,16 @@ def resource_concluded(resource):
         udata = resource.data.read()
         RNS.log(f"First 32 bytes of data: {udata}")
         data = udata.decode('utf-8')
-        response = ignition.request("gemini://"+data) 
+        certset = ('certP.pem','keyP.pem')  # filename and folder of the certificated to your Gemini authentification 
+        response = ignition.request("gemini://"+str(data),ca_cert=certset) # private server with cert
+        #response = ignition.request("gemini://"+data) 
+        parsed =  urllib.parse.urlparse("gemini://"+data)
+
+        master_scheme = parsed.scheme
+        master_netloc = parsed.netloc
+        master_spath1 = parsed.path
+        master_spath = master_spath1.split("/" or "\n")
+
         if response.is_a(ignition.SuccessResponse):
             
             msg_final = response.data()
@@ -130,8 +139,12 @@ def resource_concluded(resource):
             print(f"Needs additional input: {response.data()}")
 
         elif response.is_a(ignition.RedirectResponse):
-            reply_message ='30 %s' % (response.data())
+            data = response.data()
+            #print (data+"----"+master_netloc)
+            response = ignition.request(data,referer="gemini://"+master_netloc,ca_cert=certset) # Private
+#            response = ignition.request(data,referer="gemini://"+master_netloc) # Public
 
+            reply_message ='20 %s' % (response.data())
             print(f"Received response, redirect to: {response.data()}")
             
         elif response.is_a(ignition.TempFailureResponse):
@@ -159,8 +172,8 @@ def resource_concluded(resource):
         if type(reply_message) == str : 
             reply_message = reply_message.encode('utf-8')
         # Send the resource
-        resource = RNS.Resource(reply_message, resource.link, metadata=metadata, callback=resource_concluded_sending, auto_compress=True,timeout=360)
-
+        resource = RNS.Resource(reply_message, resource.link, metadata=metadata, callback=resource_concluded_sending, auto_compress=True)
+#        resource = RNS.Resource(reply_message, resource.link, metadata=metadata, auto_compress=True)
 ##########################################################
 #### Program Startup #####################################
 ##########################################################
@@ -198,5 +211,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("")
         sys.exit(0)
-
 
