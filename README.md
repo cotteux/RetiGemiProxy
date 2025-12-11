@@ -1,5 +1,5 @@
 # RetiGemiProxy
-Gemini proxy for using Lagrange with Lora network on Reticulum Network
+Gemini proxy for using Lagrange with Lora radio on Reticulum Network
 PROTOTYPE WIP
 
 This program connect your Lagrange browser (or any Gemini Browser with a proxy option) through Reticulum Network to connect at Gemini Network.
