@@ -10,21 +10,17 @@ import socket
 import socketserver
 import ssl
 import sys
-import tempfile
+#import tempfile
 import urllib.parse
-from pubsub import pub
-import os
 import time
-import json
 import RNS
 
-from pathlib import Path
-
-import time
-from datetime import datetime
+#from pathlib import Path
+#from datetime import datetime
 
 import RNS
 from RNS.vendor import umsgpack
+error = 0
 
 
 recipient_hexhash ="776002c84b3c1177f30c80bd74497d6e"  # public server without Gemini authentification certificated
@@ -38,7 +34,7 @@ enforce_stamps = False
 # is part of a range of example utilities, we'll put
 # them all within the app namespace "example_utilities"
 APP_NAME = "Gemini_Proxy"
-os.system('cls||clear')
+#os.system('cls||clear')
 
 #parser = argparse.ArgumentParser(description="Gateway to Gemini Network")
 #parser.add_argument("--port", type=str, help="Specify the serial port")
@@ -47,7 +43,7 @@ os.system('cls||clear')
 
 url = ""
 t0 = time.time()
-
+t1 = time.time()
 HOST, PORT = "0.0.0.0", 1965
 
 class AgenaHandler(socketserver.BaseRequestHandler):
@@ -60,7 +56,7 @@ class AgenaHandler(socketserver.BaseRequestHandler):
         self.request = context.wrap_socket(self.request, server_side=True)
 
     def handle(self):
-        global url, murl
+        global url, error
         # Parse request URL, make sure it's for a Gemini resource  *************************
         self.parse_request()
 
@@ -91,13 +87,15 @@ class AgenaHandler(socketserver.BaseRequestHandler):
 
         #self.handle_binary(filename)
         sign = '+'
-        while ALLDATA == b'' :
+        while ALLDATA == b'' and error==0 :
             print (sign)
             if sign == "+" : sign ="*"
             else : sign = "+"
             time.sleep(0.5)
+        
         self.handle_text(filename)
         # Clean up
+        error = 0
         self.request.close()
         #os.unlink(filename)
 
@@ -119,7 +117,7 @@ class AgenaHandler(socketserver.BaseRequestHandler):
             self.request.send("The Page is Too Big, more than 100 lines\r\n".format(url).encode("UTF-8"))
         elif status == 10 :
 
-            self.request.send("{} {}\r\n".format(10, "input requirement").encode("UTF-8"))
+            self.request.send("{} {}\r\n".format(10, meta).encode("UTF-8"))
             
         else : 
             self.request.send("{} {}\r\n".format(status, meta).encode("UTF-8"))    
@@ -143,21 +141,7 @@ class AgenaHandler(socketserver.BaseRequestHandler):
         self.request_query = parsed.query
 
         
-    def handle_binary(self, filename):
-        """
-        Send a Gemini response for a downloaded Gopher resource whose item
-        type indicates it should be a binary file.  Uses file(1) to sniff MIME
-        types.
-        """
-
-        # Detect MIME type
-        out = subprocess.check_output(
-            shlex.split("file --brief --mime-type %s" % filename)
-        )
-        mimetype = out.decode("UTF-8").strip()
-
-        self._serve_file(mimetype, filename)
-    
+ 
     def handle_text(self, filename):
         """
         Send a Gemini response for a downloaded Gopher resource whose item
@@ -165,14 +149,6 @@ class AgenaHandler(socketserver.BaseRequestHandler):
         """
         
         self._serve_file("text/gemini", filename)
-
-        
-    def handle_html(self, filename):
-        """
-        Send a Gemini response for a downloaded Gopher resource whose item
-        type indicates it should be HTML.
-        """
-        self._serve_file("text/html", filename)
 
     def _serve_file(self, mime, filename):
         global url,ALLDATA
@@ -184,20 +160,21 @@ class AgenaHandler(socketserver.BaseRequestHandler):
         try :
             readd = mread.decode('utf-8')
         except :
+
             print ("not utf8 "+self.request_path[-4:])
-            if '.jpg'  in self.request_path or '.JPG'  in self.request_path :                
+            if '.JPG'  in self.request_path.upper()  or '.JPEG'  in self.request_path.upper() :                
                 mime='image/jpg'                
-            elif '.png' in self.request_path  :                
+            elif '.PNG' in self.request_path.upper()  :                
                 mime='image/png'                
-            elif '.gif' in self.request_path  :                
+            elif '.GIF' in self.request_path.upper() :                
                 mime='image/gif'
-            elif '.ogg' in self.request_path  :                
+            elif '.OGG' in self.request_path.upper()  :                
                 mime='audio/ogg'
             else :
                 mime='application/octet-stream'
             
             readd = '20'
-
+           
             
         readcode = readd[:2]
 
@@ -219,11 +196,11 @@ class AgenaHandler(socketserver.BaseRequestHandler):
         ALLDATA = b''
 
     def send_message(self,text) :
-        global server_link
+        global server_link,t1
         # Wait for the link to become active
         while not server_link:
             time.sleep(0.1)
-
+        t1 = time.time()
         should_quit = False
         data = text.encode("utf-8")
         
@@ -233,8 +210,8 @@ class AgenaHandler(socketserver.BaseRequestHandler):
         metadata = 'link'
         
         # Send the resource
-        resource = RNS.Resource(data, server_link, metadata=metadata, auto_compress=False, callback=resource_concluded_sending, timeout=360)
-
+        resource = RNS.Resource(data, server_link, metadata=metadata,auto_compress=True, callback=resource_concluded_sending)
+#        resource = RNS.Resource(data, server_link, auto_compress=True)
         # Alternatively, you can stream data
         # directly from an open file descriptor
 
@@ -308,26 +285,28 @@ def client(destination_hexhash, configpath):
     # for the user to interact with the example
 
 def resource_concluded_sending(resource):
-    global t0,url
+    global t0,url,error
     if resource.status == RNS.Resource.COMPLETE: 
         RNS.log(f"The link {url} was sent successfully")
         t0 = time.time()
-    else: RNS.log(f"Sending the link {url} failed")
-
+    else: 
+        RNS.log(f"Sending the link {url} failed")
+        error = 1
 def resource_concluded(resource):
-    global t0,ALLDATA
+    global t0,ALLDATA,t1
     if resource.status == RNS.Resource.COMPLETE: 
         
         data = resource.data.read()
-        
+        ALLDATA = data
         print(str(resource.get_transfer_size())+' bytes Transfert')
         print(str(resource.get_data_size())+' bytes uncompressed')
+        print(str(round(time.time()-t1,2))+" Sec total")
         print("send in "+str(resource.get_parts())+" parts")
         total = time.time() - t0
         
         print (str(round(total,2))+" sec with a speed of "+str(round(resource.get_transfer_size()/total*8,0))+" bauds")
         print ("with compression with a speed of "+str(round(resource.get_data_size()/total*8,0))+" bauds")
-        ALLDATA = data
+        
 
 # This function is called when a link
 # has been established with the server
@@ -340,7 +319,7 @@ def link_established(link):
 
     # Inform the user that the server is
     # connected
-    RNS.log("Link established with server, hit enter to sand a resource, or type in \"quit\" to quit")
+    RNS.log("Link established with server")
 
 # When a link is closed, we'll inform the
 # user, and exit the program
@@ -353,6 +332,8 @@ def link_closed(link):
         RNS.log("Link closed, exiting now")
     
     time.sleep(1.5)
+    agena.shutdown()
+    agena.server_close()
     sys.exit(0)
 
 if __name__ == "__main__":
