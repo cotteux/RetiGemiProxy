@@ -30,7 +30,7 @@ Why I did this. Want to work with Lora communication easilly using rnode to Navi
    
      pip install ignition-gemini
 ## Client
-You can use Client.py without modification to connect direct to the TEST public server without config but not for day to day use.
+You can use Client.py without modification to connect direct to the TEST public server without config .
 The cert and key, come with are for the Client.py to connect with the browser like Lagrange.
 For the Client.py you need to change recipient_hexhash for you server link. 
 
