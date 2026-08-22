@@ -1,3 +1,5 @@
+
+
 # RetiGemiProxy
 Gemini proxy for using Lagrange with Lora radio on Reticulum Network
 PROTOTYPE WIP
@@ -18,7 +20,7 @@ Why I did this. Want to work with Lora communication easilly using rnode to Navi
    
    and comment this line
    
-     #response = ignition.request("gemini://"+str(data)) # for Public server
+     #response = ignition.request("gemini://"+data) # for Public server
      
 ## Proxy Server Public (do this for Private server)
  --Now mutiples clients can connect to the server
